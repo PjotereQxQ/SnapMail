@@ -1,22 +1,31 @@
 {
   "expo": {
-    "name": "aplikacja",
+    "name": "SnapMail",
     "slug": "aplikacja",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "aplikacja",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Aplikacja potrzebuje dostępu do kamery.",
+        "NSMicrophoneUsageDescription": "Aplikacja potrzebuje dostępu do mikrofonu."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#3a5eff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.anonymous.aplikacja"
     },
     "web": {
       "bundler": "metro",
@@ -33,10 +42,18 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-font",
+      "expo-mail-composer"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "48ed9912-edfc-426d-ad99-5af9fa4deebf"
+      }
     }
   }
 }

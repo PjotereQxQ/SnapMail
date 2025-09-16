@@ -1,50 +1,99 @@
-# Welcome to your Expo app 👋
+# 📸 Aplikacja mobilna - Kamera, Galeria i Mail
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplikacja mobilna została stworzona w React Native z Expo i jest prostym, ale praktycznym narzędziem do pracy ze zdjęciami. Jej główne funkcje to:
 
-## Get started
+- Robienie zdjęć kamerą – użytkownik może uruchomić kamerę wbudowaną w aplikację i od razu wykonać fotografię. Nie trzeba korzystać z systemowej aplikacji aparatu.
 
-1. Install dependencies
+- Galeria wewnętrzna – wszystkie zrobione zdjęcia zapisują się w galerii aplikacji, dzięki czemu użytkownik ma je zawsze w jednym miejscu. Galeria pozwala przeglądać zdjęcia i wybierać konkretne pliki do dalszych działań.
 
-   ```bash
-   npm install
-   ```
+- Wysyłanie zdjęć mailem – wybrane fotografie można wysłać bezpośrednio z aplikacji na podany adres e-mail. Funkcja sprawdza się np. do szybkiego udostępniania dokumentów, notatek wizualnych czy zdjęć z pracy w terenie.
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## 🛠️ Technologie
 
-In the output, you'll find options to open the app in a
+React Native + Expo – do budowy całej aplikacji i integracji z kamerą oraz pamięcią urządzenia.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- Expo Image Picker / Camera – obsługa robienia zdjęć i zapisywania ich w galerii.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- Expo MailComposer – wysyłka zdjęć mailem z poziomu aplikacji.
 
-## Get a fresh project
+- EAS Build – generowanie gotowych paczek .apk / .aab (Android) oraz .ipa (iOS).
 
-When you're ready, run:
+---
 
-```bash
-npm run reset-project
-```
+## 🎯 Zastosowania
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+- szybkie robienie i archiwizowanie zdjęć do pracy (np. prototypów, notatek, dokumentów),
 
-## Learn more
+- wysyłanie raportów ze zdjęciami prosto z telefonu,
 
-To learn more about developing your project with Expo, look at the following resources:
+- osobista mini-galeria do przechowywania fotek niezależnie od systemowej aplikacji aparatu.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+---
 
-## Join the community
+## ⚙️ Wymagania
+- Node.js (najlepiej wersja LTS v22.19.0)  
+- npm lub yarn
+- Expo CLI  
 
-Join our community of developers creating universal apps.
+EAS CLI (do budowania paczek): 
+- npm install -g eas-cli
+- Android Studio (opcjonalnie, jeśli chcesz używać emulatora)
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## 🚀 Instalacja projektu
+1. Pobierz aplikacje
+2. Wejdź do folderu: 
+   - cd projekt
+3. Zainstaluj zależnosci:
+   - npm install
+   
+   albo
+   - yarn install (jeśli, używasz yarn)
+
+---
+
+## ▶️ Uruchamianie aplikacji
+1. Odpal serwer developerski:
+   - npx expo start
+2. W terminalu zobaczysz QR kod.
+Zeskanuj go aplikacją Expo Go na telefonie.
+Aplikacja uruchomi się automatycznie.
+
+---
+
+## 📦 Budowanie aplikacji
+1. Android
+   Musisz posiadać konto na expo.dev i być zalogowany: eas login
+   - eas build -p android --profile production
+   
+   Domyślnie wygeneruje plik .aab (do wrzucenia na Google Play).
+   Jeśli chcesz paczkę testową .apk:
+      - eas build -p android --profile preview
+
+2. iOS
+   - eas build -p ios --profile production
+
+---
+
+## 🔑 Konfiguracja
+1. Plik app.json pozwala zmienić nazwę, ikonę i wersję aplikacji.
+Przykład:
+   - {
+  "expo": {
+    "name": "MojaAplikacja",
+    "slug": "moja-aplikacja",
+    "version": "1.0.0",
+    "android": {
+      "versionCode": 1
+    },
+    "ios": {
+      "buildNumber": "1.0.0"
+    }
+  }
+}
+2. Aktualizacja wersji
+   - Zmień version oraz android.versionCode (na Androidzie musi być zawsze wyższy numer niż poprzednio).
+   - Na iOS zwiększ ios.buildNumber.
