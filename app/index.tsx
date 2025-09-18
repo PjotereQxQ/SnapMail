@@ -20,6 +20,7 @@ import Email from "./ekrany/email";
 import Galeria from "./ekrany/galeria";
 import Home from "./ekrany/home";
 import Login from "./ekrany/login";
+import Roles from "./ekrany/roles";
 import { PhotosProvider } from "./PhotosContext";
 const Stack = createNativeStackNavigator();
 
@@ -35,6 +36,7 @@ export default function App() {
             <Stack.Screen name="Start" component={StartScreen} />
             <Stack.Screen name="Login" component={Login} />
             <Stack.Screen name="Home" component={Home} />
+            <Stack.Screen name="Roles" component={Roles} />
             <Stack.Screen name="Galeria" component={Galeria} />
             <Stack.Screen name="Cameras" component={CameraScreen} />
             <Stack.Screen name="Email" component={Email} />

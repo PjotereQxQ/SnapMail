@@ -61,40 +61,46 @@ export default function CameraScreen({ navigation, route }: any) {
         mute={false}
         responsiveOrientationWhenOrientationLocked
       >
-        <View style={styles.galleryBtnContainer}>
-          <TouchableOpacity
-            style={styles.galleryBtn}
-            onPress={() => navigation.navigate("Galeria", {mail: mail, uprawnienia: uprawnienia})}
-          >
-            <Text style={styles.galleryText}>Powrót</Text>
-          </TouchableOpacity>
+        <View style={{ position: "absolute", bottom: 44, width: "100%" }}>
+  <View style={{justifyContent: 'center', alignItems: "center", margin: 20, marginLeft: 40 }}>
+    <TouchableOpacity
+      style={styles.galleryBtn}
+      onPress={() => navigation.navigate("Galeria", { mail: mail, uprawnienia: uprawnienia })}
+    >
+      <Text style={styles.galleryText}>Powrót</Text>
+    </TouchableOpacity>
+  </View>
+
+  <View style={{ flexDirection: "row", justifyContent: "space-around", alignItems: "center" }}>
+    <TouchableOpacity
+      onPress={() =>
+        photos.length > 0 &&
+        navigation.navigate("Galeria", { mail: mail, uprawnienia: uprawnienia })
+      }
+      style={styles.thumbnail}
+    >
+      {photos.length > 0 && (
+        <Image
+          source={{ uri: photos[photos.length - 1].full }}
+          style={{ width: "100%", height: "100%" }}
+        />
+      )}
+    </TouchableOpacity>
+
+    <Pressable onPress={takePicture}>
+      {({ pressed }) => (
+        <View style={[styles.shutterBtn, { opacity: pressed ? 0.5 : 1 }]}>
+          <View style={styles.shutterBtnInner} />
         </View>
+      )}
+    </Pressable>
 
-        <View style={styles.bottomBar}>
-          <TouchableOpacity
-            onPress={() => photos.length > 0 && navigation.navigate("Galeria")}
-            style={styles.thumbnail}
-          >
-            {photos.length > 0 ? (
-              <Image
-                source={{ uri: photos[photos.length - 1].full }}
-                style={{ width: "100%", height: "100%" }}
-              />
-            ) : null}
-          </TouchableOpacity>
+    <Pressable onPress={toggleFacing}>
+      <FontAwesome6 name="rotate-left" size={32} color="white" />
+    </Pressable>
+  </View>
+</View>
 
-          <Pressable onPress={takePicture}>
-            {({ pressed }) => (
-              <View style={[styles.shutterBtn, { opacity: pressed ? 0.5 : 1 }]}>
-                <View style={styles.shutterBtnInner} />
-              </View>
-            )}
-          </Pressable>
-
-          <Pressable onPress={toggleFacing}>
-            <FontAwesome6 name="rotate-left" size={32} color="white" />
-          </Pressable>
-        </View>
       </CameraView>
     </View>
   );
@@ -103,33 +109,33 @@ export default function CameraScreen({ navigation, route }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#000", justifyContent: "center", alignItems: "center" },
   camera: { flex: 1, width: "100%" },
+bottomBar: {
+  position: "absolute",
+  bottom: 44,
+  left: 0,
+  width: "100%",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 15,
+},
 
-  bottomBar: {
-    position: "absolute",
-    bottom: 44,
-    left: 0,
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-  },
+galleryBtn: {
+  backgroundColor: "white",
+  paddingHorizontal: 20,
+  paddingVertical: 10,
+  borderRadius: 10,
+  alignSelf: "center",
+  width: 120,
+  justifyContent: 'center',
+  alignItems: 'center',
+},
 
   galleryBtnContainer: {
-    position: "absolute",
-    bottom: 160,
     alignSelf: "center",
+    justifyContent: "center",
+    alignItems: 'center'
   },
-  galleryBtn: {
-    backgroundColor: "white",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 18,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 5,
-  },
+  
   galleryText: {
     color: "black",
     fontSize: 16,

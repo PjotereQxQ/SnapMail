@@ -1,7 +1,7 @@
 import { Poppins_400Regular, Poppins_700Bold, useFonts } from "@expo-google-fonts/poppins";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Alert,
   StyleSheet,
@@ -11,16 +11,63 @@ import {
   View,
   useWindowDimensions
 } from "react-native";
-import users from "../users.json";
+import * as FileSystem from "expo-file-system";
+
 type Props = NativeStackScreenProps<any>;
 
 export default function LoginScreen({ navigation }: Props) {
   const [Email, setEmail] = useState("");
+  const [users, setUsers] = useState<Record<string, string>>({});
   const { width, height } = useWindowDimensions();
   let [fontsLoaded] = useFonts({
     Poppins_700Bold,
     Poppins_400Regular
   });
+
+  const path = FileSystem.documentDirectory + "users.json";
+
+  useEffect(() => {
+  const loadUsers = async () => {
+    try {
+      const exists = await FileSystem.getInfoAsync(path);
+      if (!exists.exists) {
+        const defaultUsers = { "ziemblapiotr1@gmail.com": "Admin" };
+        await FileSystem.writeAsStringAsync(path, JSON.stringify(defaultUsers));
+      }
+
+      let content = await FileSystem.readAsStringAsync(path);
+let obj = JSON.parse(content) as Record<string, string>;
+
+if (Object.keys(obj).length === 0) {
+  const defaultUsers = { "ziemblapiotr1@gmail.com": "Admin" };
+  await FileSystem.writeAsStringAsync(path, JSON.stringify(defaultUsers));
+  obj = defaultUsers;
+}
+
+setUsers(obj);
+
+    } catch (error) {
+      console.error("Błąd przy wczytywaniu users.json:", error);
+    }
+  };
+
+  loadUsers();
+}, []);
+
+
+  const handleLogin = () => {
+    if (Email in users) {
+      const role = users[Email];
+      navigation.navigate("Home", { mail: Email, role });
+    } else {
+      Alert.alert("Błąd", "Nie znaleziono podanego maila", [
+        { text: "Pomiń logowanie", onPress: () => navigation.navigate("Home") },
+        { text: "OK" },
+      ]);
+    }
+  };
+
+  
   return (
     <LinearGradient
       colors={["#3B82F6", "#9333EA"]}
@@ -41,61 +88,24 @@ export default function LoginScreen({ navigation }: Props) {
         />
       </View>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => { if(Email in users){ navigation.navigate("Home", { mail: Email, })} else{Alert.alert("Błąd", "Nie znaleziono podanego maila", [
-        { text: "Pomiń logowanie", onPress: () => navigation.navigate("Home") },
-        { text: "OK", }
-      ],
-      { cancelable: true });}}}
-      >
-        <Text
-          style={{
-            color: "black",
-            fontSize: 18,
-            fontFamily: "Poppins_700Bold",
-          }}
-        >
+      <TouchableOpacity style={styles.button} onPress={handleLogin}>
+        <Text style={{ color: "black", fontSize: 18, fontFamily: "Poppins_700Bold" }}>
           Zaloguj
         </Text>
       </TouchableOpacity>
+
       <TouchableOpacity
         style={styles.goback}
         onPress={() => navigation.navigate("Home")}
       >
-        <Text
-          style={{
-            color: "#CBCBCB",
-            fontSize: 20,
-            textDecorationLine: "underline",
-            fontFamily: "Poppins_700Bold",
-            textShadowColor: "rgba(0,0,0,0.5)",
-            textShadowOffset: { width: 2, height: 2 },
-            textShadowRadius: 5,
-          }}
-        >
-          Pomiń logowanie
-        </Text>
+        <Text style={styles.skipText}>Pomiń logowanie</Text>
       </TouchableOpacity>
+
       <TouchableOpacity
         style={styles.goback}
         onPress={() => navigation.navigate("Start")}
       >
-        <Text
-          style={{
-            color: "#CBCBCB",
-            fontSize: 16,
-            textDecorationLine: "underline",
-            fontFamily: "Poppins_400Regular",
-            textShadowColor: "rgba(0,0,0,0.5)",
-            textShadowOffset: { width: 2, height: 2 },
-            textShadowRadius: 5,
-            width: 100,
-            textAlign: 'center'
-          }}
-        >
-          Wróć
-        </Text>
+        <Text style={styles.backText}>Wróć</Text>
       </TouchableOpacity>
     </LinearGradient>
   );
@@ -160,5 +170,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 5,
+  },
+  skipText: {
+    color: "#CBCBCB",
+    fontSize: 20,
+    textDecorationLine: "underline",
+    fontFamily: "Poppins_700Bold",
+    textShadowColor: "rgba(0,0,0,0.5)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 5,
+  },
+  backText: {
+    color: "#CBCBCB",
+    fontSize: 16,
+    textDecorationLine: "underline",
+    fontFamily: "Poppins_400Regular",
+    textShadowColor: "rgba(0,0,0,0.5)",
+    textShadowOffset: { width: 2, height: 2 },
+    textShadowRadius: 5,
+    width: 100,
+    textAlign: 'center'
   },
 });

@@ -1,6 +1,6 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { LinearGradient } from "expo-linear-gradient";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -8,19 +8,49 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import * as FileSystem from "expo-file-system";
 import { usePhotos } from "../PhotosContext";
-import users from "../users.json";
 
 type Props = NativeStackScreenProps<any>;
+type UserRecord = Record<string, string>;
 
 export default function HomeScreen({ navigation, route }: Props) {
   const { width, height } = useWindowDimensions();
   const { clearPhotos } = usePhotos();
-
-  const typedUsers: Record<string, string> = users;
+  const [users, setUsers] = useState<UserRecord>({});
   const mail = route.params?.mail || "Anonimowy";
-  const uprawnienia = typedUsers[mail] ?? "Gosc";
-  const role: Record<string, string> = {
+  const [uprawnienia, setUprawnienia] = useState("Gosc");
+
+  const path = FileSystem.documentDirectory + "users.json";
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const exists = await FileSystem.getInfoAsync(path);
+        if (!exists.exists) {
+          const defaultUsers: UserRecord = {
+            "ziemblapiotr1@gmail.com": "Admin",
+            "konradkania390@gmail.com": "User",
+          };
+          await FileSystem.writeAsStringAsync(path, JSON.stringify(defaultUsers));
+          setUsers(defaultUsers);
+        } else {
+          const content = await FileSystem.readAsStringAsync(path);
+          const obj = JSON.parse(content) as UserRecord;
+          setUsers(obj);
+        }
+      } catch (error) {
+        console.error("Błąd przy wczytywaniu users.json:", error);
+      }
+    };
+    loadUsers();
+  }, []);
+
+  useEffect(() => {
+    setUprawnienia(users[mail] ?? "Gosc");
+  }, [users, mail]);
+
+  const roleDisplay: Record<string, string> = {
     Admin: "Adminie",
     User: "Użytkowniku",
     Gosc: "Gościu",
@@ -37,16 +67,16 @@ export default function HomeScreen({ navigation, route }: Props) {
         <Text style={styles.text}>Start</Text>
       </View>
       <Text style={styles.title}>
-        Witaj, {role[uprawnienia] + (mail === "Anonimowy" ? "" : ": \n")}
-        {mail == "Anonimowy"? "": mail + "!"}
+        Witaj, {roleDisplay[uprawnienia] + (mail === "Anonimowy" ? "" : ": \n")}
+        {mail === "Anonimowy" ? "" : mail + "!"}
       </Text>
 
       <TouchableOpacity
         style={styles.button}
         onPress={() =>
           navigation.navigate("Galeria", {
-            mail: mail,
-            uprawnienia: uprawnienia,
+            mail,
+            uprawnienia,
           })
         }
       >
@@ -57,13 +87,24 @@ export default function HomeScreen({ navigation, route }: Props) {
         style={styles.button}
         onPress={() =>
           navigation.navigate("Cameras", {
-            mail: mail,
-            uprawnienia: uprawnienia,
+            mail,
+            uprawnienia,
           })
         }
       >
         <Text style={styles.buttonLabel}>Zrób Zdjęcie</Text>
       </TouchableOpacity>
+
+      {uprawnienia === "Admin" && (
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() =>
+            navigation.navigate("Roles", { mail, uprawnienia })
+          }
+        >
+          <Text style={styles.buttonLabel}>Użytkownicy</Text>
+        </TouchableOpacity>
+      )}
 
       <TouchableOpacity
         style={styles.goback}
@@ -77,6 +118,8 @@ export default function HomeScreen({ navigation, route }: Props) {
     </LinearGradient>
   );
 }
+
+
 
 const styles = StyleSheet.create({
   body: {
