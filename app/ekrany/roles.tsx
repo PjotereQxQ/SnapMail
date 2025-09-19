@@ -125,25 +125,31 @@ const deleteUser = (email: string) => {
             </View>
 
       <ScrollView style={{ width: "90%", marginBottom: 20 }}>
-        {users.map(u => (
-          <View key={u.email} style={styles.userRow}>
-            <Text style={styles.userText}>{u.email}</Text>
+  {users.map(u => (
+    <View key={u.email} style={styles.userRow}>
+      <Text style={styles.userText}>{u.email}</Text>
 
-            <TextInput
-              style={styles.roleInput}
-              value={u.role}
-              onChangeText={text => changeRole(u.email, text)}
-            />
+      <TextInput
+        style={styles.roleInput}
+        value={u.role}
+        onChangeText={text => {
+          setUsers(users.map(x => x.email === u.email ? { ...x, role: text } : x));
+        }}
+        onEndEditing={e => {
+          changeRole(u.email, e.nativeEvent.text);
+        }}
+      />
 
-            <TouchableOpacity
-              style={styles.deleteButton}
-              onPress={() => deleteUser(u.email)}
-            >
-              <Text style={{ color: "white", fontWeight: "bold" }}>Usuń</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
-      </ScrollView>
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => deleteUser(u.email)}
+      >
+        <Text style={{ color: "white", fontWeight: "bold" }}>Usuń</Text>
+      </TouchableOpacity>
+    </View>
+  ))}
+</ScrollView>
+
 
       <TextInput
         style={styles.input}

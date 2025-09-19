@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   View,
+  Alert,
 } from "react-native";
 import { usePhotos } from "../PhotosContext";
 
@@ -97,13 +98,21 @@ export default function Galeria({ navigation, route }: any) {
               width: width * 0.3,
             },
           ]}
-          onPress={() =>
+          onPress={() => {
+            if (selectedPhotos.length === 0) {
+              Alert.alert(
+                "Brak zdjęć",
+                "Musisz wybrać przynajmniej jedno zdjęcie, aby wysłać maila."
+              );
+              return;
+            }
+
             navigation.navigate("Email", {
               photos: selectedPhotos,
               mail: mail,
               uprawnienia: uprawnienia,
-            })
-          }
+            });
+          }}
         >
           <Text style={[styles.buttonText]}>Wyślij</Text>
         </TouchableOpacity>
