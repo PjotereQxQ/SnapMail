@@ -18,7 +18,8 @@ export default function Galeria({ navigation, route }: any) {
   const { photos } = usePhotos();
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const mail = route.params.mail;
-  const uprawnienia = route.params.uprawnienia;
+const uprawnienia = route.params.uprawnienia;
+const targetMail = route.params.target_mail;
 
   const toggleSelect = (uri: string) => {
     if (selectedPhotos.includes(uri)) {
@@ -70,6 +71,7 @@ export default function Galeria({ navigation, route }: any) {
             navigation.navigate("Home", {
               mail: mail,
               uprawnienia: uprawnienia,
+  target_mail: targetMail,
             })
           }
         >
@@ -81,6 +83,7 @@ export default function Galeria({ navigation, route }: any) {
             navigation.navigate("Cameras", {
               mail: mail,
               uprawnienia: uprawnienia,
+  target_mail: targetMail,
             })
           }
         >
@@ -91,31 +94,35 @@ export default function Galeria({ navigation, route }: any) {
           />
         </TouchableOpacity>
         <TouchableOpacity
-          style={[
-            styles.button,
-            {
-              backgroundColor: "#10B981",
-              width: width * 0.3,
-            },
-          ]}
-          onPress={() => {
-            if (selectedPhotos.length === 0) {
-              Alert.alert(
-                "Brak zdjęć",
-                "Musisz wybrać przynajmniej jedno zdjęcie, aby wysłać maila."
-              );
-              return;
-            }
+  style={[
+    styles.button,
+    { backgroundColor: "#10B981", width: width * 0.3 },
+  ]}
+  onPress={() => {
+    if (uprawnienia === "Gosc") {
+      Alert.alert("Brak dostępu", "Gość nie może wysyłać maili.");
+      return;
+    }
 
-            navigation.navigate("Email", {
-              photos: selectedPhotos,
-              mail: mail,
-              uprawnienia: uprawnienia,
-            });
-          }}
-        >
-          <Text style={[styles.buttonText]}>Wyślij</Text>
-        </TouchableOpacity>
+    if (selectedPhotos.length === 0) {
+      Alert.alert(
+        "Brak zdjęć",
+        "Musisz wybrać przynajmniej jedno zdjęcie, aby wysłać maila."
+      );
+      return;
+    }
+
+    navigation.navigate("Email", {
+      photos: selectedPhotos,
+      mail,
+      uprawnienia,
+      target_mail: targetMail
+    });
+  }}
+>
+  <Text style={[styles.buttonText]}>Wyślij</Text>
+</TouchableOpacity>
+
       </View>
     </LinearGradient>
   );

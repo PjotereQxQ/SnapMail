@@ -8,109 +8,122 @@ import {
   View,
   useWindowDimensions,
   ScrollView,
+  Pressable
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import * as FileSystem from "expo-file-system";
+import { Picker } from "@react-native-picker/picker";
 
-type User = { email: string; role: string };
+type User = {
+  email: string;
+  role: string;
+  target_mail: string;
+};
 
-export default function UsersScreen({ route, navigation }: any) {
+const API_URL = "https://snapmail-backend.onrender.com";
+
+export default function UsersScreen({ navigation }: any) {
   const { width, height } = useWindowDimensions();
   const [users, setUsers] = useState<User[]>([]);
   const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState("User");
 
-  const path = FileSystem.documentDirectory + "users.json";
-
-  useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        const exists = await FileSystem.getInfoAsync(path);
-        if (!exists.exists) {
-          const defaultUsers = {
-            "ziemblapiotr1@gmail.com": "Admin",
-          };
-          await FileSystem.writeAsStringAsync(path, JSON.stringify(defaultUsers));
-        }
-
-        const content = await FileSystem.readAsStringAsync(path);
-        const obj = JSON.parse(content) as Record<string, string>;
-        setUsers(
-          Object.entries(obj).map(([email, role]): User => ({
-            email,
-            role: role as string,
-          }))
-        );
-      } catch (error) {
-        console.error("Błąd przy wczytywaniu users.json:", error);
-      }
-    };
-
-    loadUsers();
-  }, []);
-
-  const saveUsersToFile = async (updatedUsers: User[]) => {
-    const objToSave: Record<string, string> = {};
-    updatedUsers.forEach(u => (objToSave[u.email] = u.role));
+  // Pobierz użytkowników z backendu
+  const loadUsers = async () => {
     try {
-      await FileSystem.writeAsStringAsync(path, JSON.stringify(objToSave));
+      const res = await fetch(`${API_URL}/users`);
+      const data = await res.json();
+      setUsers(data);
     } catch (error) {
-      console.error("Błąd przy zapisie users.json:", error);
-      Alert.alert("Błąd przy zapisie użytkowników");
+      console.error("Błąd przy pobieraniu użytkowników:", error);
     }
   };
 
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const validateEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
   const addUser = async () => {
     if (!newEmail) return Alert.alert("Wpisz email");
-    if (users.find(u => u.email === newEmail)) return Alert.alert("Użytkownik już istnieje");
+    if (!validateEmail(newEmail))
+      return Alert.alert("Nieprawidłowy format emaila");
 
-    const updatedUsers = [...users, { email: newEmail, role: newRole == "Admin" ? 'Admin' : 'User' }];
-    setUsers(updatedUsers);
-    await saveUsersToFile(updatedUsers);
-    setNewEmail("");
-    setNewRole("User");
+    try {
+      await fetch(`${API_URL}/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newEmail, role: newRole, target_mail: newEmail }),
+      });
+      setNewEmail("");
+      setNewRole("User");
+      loadUsers();
+    } catch (error) {
+      console.error("Błąd przy dodawaniu:", error);
+    }
   };
 
-  const changeRole = async (email: string, newRoleValue: string) => {
-  const role = newRoleValue === "Admin" ? "Admin" : "User"; 
-  const updatedUsers = users.map(u =>
-    u.email === email ? { ...u, role } : u
-  );
-  setUsers(updatedUsers);
-  await saveUsersToFile(updatedUsers);
-};
+ const deleteUser = async (email: string) => {
+  const adminCount = users.filter(u => u.role === "Admin").length;
+  const userToDelete = users.find(u => u.email === email);
 
-const deleteUser = (email: string) => {
-  Alert.alert(
-    "Usuń użytkownika",
-    `Czy na pewno chcesz usunąć ${email}?`,
-    [
-      { text: "Anuluj", style: "cancel" },
-      {
-        text: "Usuń",
-        style: "destructive",
-        onPress: async () => {
-          let updatedUsers = users.filter(u => u.email !== email);
+  if (userToDelete?.role === "Admin" && adminCount === 1) {
+    // Jeśli jest jedyny admin
+    Alert.alert(
+      "Nie można usunąć",
+      "Nie można usunąć jedynego admina. Tworzę domyślnego admina..."
+    );
+    try {
+      await fetch(`${API_URL}/users/default-admin`, { method: "POST" });
+      loadUsers();
+    } catch (error) {
+      console.error("Błąd przy tworzeniu domyślnego admina:", error);
+    }
+    return;
+  }
 
-          const hasAdmin = updatedUsers.some(u => u.role === "Admin");
-
-          if (!hasAdmin) {
-            updatedUsers.push({ email: "ziemblapiotr1@gmail.com", role: "Admin" });
-            Alert.alert(
-              "Uwaga",
-              "Nie było żadnego admina - dodano użytkownika domyślnego."
-            );
-          }
-
-          setUsers(updatedUsers);
-          await saveUsersToFile(updatedUsers);
+  Alert.alert("Usuń użytkownika", `Czy na pewno chcesz usunąć ${email}?`, [
+    { text: "Anuluj", style: "cancel" },
+    {
+      text: "Usuń",
+      style: "destructive",
+      onPress: async () => {
+        try {
+          await fetch(`${API_URL}/users/${email}`, { method: "DELETE" });
+          loadUsers();
+        } catch (error) {
+          console.error("Błąd przy usuwaniu:", error);
         }
-      }
-    ]
-  );
+      },
+    },
+  ]);
 };
 
+const changeRole = async (email: string, newRole: string, target_mail: string) => {
+  const adminCount = users.filter(u => u.role === "Admin").length;
+  const userToChange = users.find(u => u.email === email);
 
+  if (userToChange?.role === "Admin" && newRole !== "Admin" && adminCount === 1) {
+    Alert.alert(
+      "Nie można zmienić roli",
+      "Nie można zmienić roli jedynego admina."
+    );
+    loadUsers(); 
+    return;
+  }
+
+  try {
+    await fetch(`${API_URL}/users/${email}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role: newRole, target_mail }),
+    });
+    loadUsers();
+  } catch (error) {
+    console.error("Błąd przy zmianie roli:", error);
+  }
+};
 
 
   return (
@@ -121,148 +134,176 @@ const deleteUser = (email: string) => {
       style={[styles.body, { paddingTop: height * 0.1 }]}
     >
       <View style={styles.header}>
-              <Text style={styles.text}>Użytkownicy</Text>
-            </View>
+        <Text style={styles.text}>Użytkownicy</Text>
+      </View>
 
       <ScrollView style={{ width: "90%", marginBottom: 20 }}>
-  {users.map(u => (
-    <View key={u.email} style={styles.userRow}>
-      <Text style={styles.userText}>{u.email}</Text>
+        {users.map((u) => (
+          <View key={u.email} style={styles.userCard}>
+            <Pressable
+              onPress={() => Alert.alert("Pełny email", u.email)}
+              style={styles.emailWrapper}
+            >
+              <Text style={styles.userText} numberOfLines={1} ellipsizeMode="tail">
+                {u.email}
+              </Text>
+            </Pressable>
 
-      <TextInput
-        style={styles.roleInput}
-        value={u.role}
-        onChangeText={text => {
-          setUsers(users.map(x => x.email === u.email ? { ...x, role: text } : x));
-        }}
-        onEndEditing={e => {
-          changeRole(u.email, e.nativeEvent.text);
-        }}
-      />
+            <TextInput
+              style={styles.destinationInput}
+              value={u.target_mail || u.email}
+              onChangeText={(text) =>
+                setUsers(
+                  users.map((x) =>
+                    x.email === u.email ? { ...x, target_mail: text } : x
+                  )
+                )
+              }
+              onEndEditing={(e) => changeRole(u.email, u.role, e.nativeEvent.text)}
+              placeholder="Mail docelowy"
+              keyboardType="email-address"
+            />
 
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => deleteUser(u.email)}
-      >
-        <Text style={{ color: "white", fontWeight: "bold" }}>Usuń</Text>
-      </TouchableOpacity>
-    </View>
-  ))}
-</ScrollView>
+            <View style={styles.buttonsRow}>
+              <View style={styles.rolePickerWrapper}>
+                <Picker
+                  selectedValue={u.role}
+                  style={styles.rolePicker}
+                  onValueChange={(itemValue) =>
+                    changeRole(u.email, itemValue, u.target_mail)
+                  }
+                >
+                  <Picker.Item label="User" value="User" />
+                  <Picker.Item label="Admin" value="Admin" />
+                </Picker>
+              </View>
 
+              <TouchableOpacity
+                style={styles.deleteButtonCard}
+                onPress={() => deleteUser(u.email)}
+              >
+                <Text style={{ color: "white", fontWeight: "bold" }}>Usuń</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
 
       <TextInput
         style={styles.input}
         placeholder="Email nowego użytkownika"
         value={newEmail}
         onChangeText={setNewEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Rola (User/Admin)"
-        value={newRole}
-        onChangeText={setNewRole}
+        keyboardType="email-address"
+        autoCapitalize="none"
       />
 
+      <View style={styles.newRoleWrapper}>
+        <Picker
+          selectedValue={newRole}
+          style={styles.newRolePicker}
+          onValueChange={(itemValue) => setNewRole(itemValue)}
+        >
+          <Picker.Item label="User" value="User" />
+          <Picker.Item label="Admin" value="Admin" />
+        </Picker>
+      </View>
+
       <View style={[styles.buttons, { gap: width * 0.1 }]}>
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  { backgroundColor: "white", width: width * 0.3 },
-                ]}
-                onPress={() => navigation.goBack()}
-              >
-                <Text style={styles.buttonText}>Powrót</Text>
-              </TouchableOpacity>
-      
-              <TouchableOpacity
-                style={[
-                  styles.button,
-                  { backgroundColor: "#10B981", width: width * 0.3 },
-                ]}
-                onPress={addUser}
-              >
-                <Text style={styles.buttonText}>Dodaj</Text>
-              </TouchableOpacity>
-            </View>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: "white", width: width * 0.3 }]}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.buttonText}>Powrót</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: "#10B981", width: width * 0.3 }]}
+          onPress={addUser}
+        >
+          <Text style={styles.buttonText}>Dodaj</Text>
+        </TouchableOpacity>
+      </View>
     </LinearGradient>
   );
 }
 
+// (styles zostają takie same)
+
 const styles = StyleSheet.create({
-  body: {
-    flex: 1,
-    alignItems: "center",
-    padding: 20,
-  },
-  header: {
-    width: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 40,
-  },
-  text: {
-    fontSize: 40,
-    fontFamily: "Poppins_700Bold",
-    color: "white",
-    textShadowColor: "rgba(0,0,0,0.5)",
-    textShadowOffset: { width: 2, height: 2 },
-    textShadowRadius: 5,
-  },
-  userRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    padding: 8,
-    borderRadius: 10,
-  },
-  userText: {
-    color: "white",
-    flex: 1,
-  },
-  roleInput: {
-    width: 80,
-    backgroundColor: "white",
-    padding: 5,
-    borderRadius: 6,
-    marginHorizontal: 5,
-    textAlign: "center",
-  },
-  deleteButton: {
-    backgroundColor: "#EF4444",
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-  },
-  input: {
-    width: "80%",
-    backgroundColor: "rgba(255,255,255,0.4)",
-    padding: 12,
-    borderRadius: 12,
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  
-  buttons: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
-  },
+  body: { flex: 1, alignItems: "center", padding: 20 },
+  header: { width: "100%", justifyContent: "center", alignItems: "center", marginBottom: 20 },
+  text: { fontSize: 36, fontFamily: "Poppins_700Bold", color: "white", textShadowColor: "rgba(0,0,0,0.5)", textShadowOffset: { width: 2, height: 2 }, textShadowRadius: 5 },
+  userRow: { flexDirection: "row", alignItems: "center", marginBottom: 10, backgroundColor: "rgba(255,255,255,0.15)", paddingVertical: 8, paddingHorizontal: 10, borderRadius: 10 },
+
+
+  deleteButton: { backgroundColor: "#EF4444", paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8, marginLeft: 8 },
+
+  input: { width: "80%", backgroundColor: "rgba(255,255,255,0.4)", padding: 12, borderRadius: 12, fontSize: 16, marginBottom: 12 },
+
+
+  newRoleWrapper: { width: "80%", backgroundColor: "rgba(255,255,255,0.4)", borderRadius: 12, overflow: "hidden", marginBottom: 12 },
+  newRolePicker: { width: "100%", color: "black" },
+  buttons: { flexDirection: "row", justifyContent: "center", alignItems: "center", marginBottom: 20 },
   buttonText: { color: "black", fontFamily: "Poppins_700Bold", fontSize: 16 },
-  button: {
-    backgroundColor: "#FFFFFF",
-    height: 60,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 18,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 5,
-  },
+  button: { backgroundColor: "#FFFFFF", height: 60, justifyContent: "center", alignItems: "center", borderRadius: 18, marginBottom: 20, shadowColor: "#000", shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 5 },
+
+  userCard: {
+  width: "100%",
+  backgroundColor: "rgba(255,255,255,0.15)",
+  padding: 12,
+  borderRadius: 12,
+  marginBottom: 12,
+},
+
+emailWrapper: {
+  marginBottom: 8,
+},
+
+userText: {
+  color: "white",
+  fontSize: 16,
+  fontWeight: "bold",
+},
+
+destinationInput: {
+  width: "100%",
+  backgroundColor: "rgba(255,255,255,0.3)",
+  padding: 10,
+  borderRadius: 10,
+  marginBottom: 12,
+  fontSize: 14,
+},
+
+buttonsRow: {
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+},
+
+rolePickerWrapper: {
+  flex: 1,
+  marginRight: 8,
+  backgroundColor: "white",
+  borderRadius: 10,
+  overflow: "hidden",
+  height: 50, // ta sama wysokość co przycisk
+  justifyContent: "center",
+},
+
+rolePicker: {
+  width: "100%",
+  color: "black",
+  height: 50,
+},
+
+deleteButtonCard: {
+  flex: 1,
+  backgroundColor: "#EF4444",
+  justifyContent: "center",
+  alignItems: "center",
+  borderRadius: 10,
+  height: 50, // ta sama wysokość co picker
+},
+
 });

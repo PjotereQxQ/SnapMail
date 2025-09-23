@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
 
-type Photo = { full: string; thumb: string };
+export type Photo = { full: string; thumb: string };
 
 type PhotosContextType = {
   photos: Photo[];
@@ -16,7 +16,7 @@ export const PhotosProvider = ({ children }: { children: React.ReactNode }) => {
   const addPhotos = (newUris: string[]) => {
     setPhotos((prev) => [
       ...prev,
-      ...newUris.map((uri) => ({ full: uri, thumb: uri })),
+      ...newUris.map((uri) => ({ full: uri, thumb: uri })), // full i thumb jako string
     ]);
   };
 

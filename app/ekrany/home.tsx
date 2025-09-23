@@ -8,47 +8,36 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
-import * as FileSystem from "expo-file-system";
 import { usePhotos } from "../PhotosContext";
 
 type Props = NativeStackScreenProps<any>;
-type UserRecord = Record<string, string>;
 
 export default function HomeScreen({ navigation, route }: Props) {
   const { width, height } = useWindowDimensions();
   const { clearPhotos } = usePhotos();
-  const [users, setUsers] = useState<UserRecord>({});
   const mail = route.params?.mail || "Anonimowy";
-  const [uprawnienia, setUprawnienia] = useState("Gosc");
+  const [uprawnienia, setUprawnienia] = useState(route.params?.role || "Gosc");
+  const targetMail = route.params?.target_mail || "";
 
-  const path = FileSystem.documentDirectory + "users.json";
+useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      if (mail === "Anonimowy") return;
 
-  useEffect(() => {
-    const loadUsers = async () => {
-      try {
-        const exists = await FileSystem.getInfoAsync(path);
-        if (!exists.exists) {
-          const defaultUsers: UserRecord = {
-            "ziemblapiotr1@gmail.com": "Admin",
-            "konradkania390@gmail.com": "User",
-          };
-          await FileSystem.writeAsStringAsync(path, JSON.stringify(defaultUsers));
-          setUsers(defaultUsers);
-        } else {
-          const content = await FileSystem.readAsStringAsync(path);
-          const obj = JSON.parse(content) as UserRecord;
-          setUsers(obj);
-        }
-      } catch (error) {
-        console.error("Błąd przy wczytywaniu users.json:", error);
-      }
-    };
-    loadUsers();
-  }, []);
+      const res = await fetch(`https://snapmail-backend.onrender.com/users/${mail}`);
+      if (!res.ok) throw new Error("Nie znaleziono użytkownika");
 
-  useEffect(() => {
-    setUprawnienia(users[mail] ?? "Gosc");
-  }, [users, mail]);
+      const data = await res.json();
+      setUprawnienia(data.role || "Gosc"); 
+    } catch (error) {
+      console.error("Błąd przy pobieraniu użytkownika:", error);
+      setUprawnienia("Gosc");
+    }
+  };
+
+  fetchUser();
+}, [mail]);
+
 
   const roleDisplay: Record<string, string> = {
     Admin: "Adminie",
@@ -74,10 +63,8 @@ export default function HomeScreen({ navigation, route }: Props) {
       <TouchableOpacity
         style={styles.button}
         onPress={() =>
-          navigation.navigate("Galeria", {
-            mail,
-            uprawnienia,
-          })
+          navigation.navigate("Galeria", { mail, uprawnienia, target_mail: targetMail })
+
         }
       >
         <Text style={styles.buttonLabel}>Galeria</Text>
@@ -86,10 +73,8 @@ export default function HomeScreen({ navigation, route }: Props) {
       <TouchableOpacity
         style={styles.button}
         onPress={() =>
-          navigation.navigate("Cameras", {
-            mail,
-            uprawnienia,
-          })
+          navigation.navigate("Cameras", { mail, uprawnienia, target_mail: targetMail })
+
         }
       >
         <Text style={styles.buttonLabel}>Zrób Zdjęcie</Text>
@@ -99,7 +84,8 @@ export default function HomeScreen({ navigation, route }: Props) {
         <TouchableOpacity
           style={styles.button}
           onPress={() =>
-            navigation.navigate("Roles", { mail, uprawnienia })
+            navigation.navigate("Roles", { mail, uprawnienia, target_mail: targetMail })
+
           }
         >
           <Text style={styles.buttonLabel}>Użytkownicy</Text>
@@ -118,8 +104,6 @@ export default function HomeScreen({ navigation, route }: Props) {
     </LinearGradient>
   );
 }
-
-
 
 const styles = StyleSheet.create({
   body: {

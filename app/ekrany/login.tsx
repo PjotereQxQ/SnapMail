@@ -11,63 +11,58 @@ import {
   View,
   useWindowDimensions
 } from "react-native";
-import * as FileSystem from "expo-file-system";
 
 type Props = NativeStackScreenProps<any>;
 
 export default function LoginScreen({ navigation }: Props) {
-  const [Email, setEmail] = useState("");
-  const [users, setUsers] = useState<Record<string, string>>({});
+  const [users, setUsers] = useState<{ email: string; role: string; target_mail: string }[]>([]);
   const { width, height } = useWindowDimensions();
   let [fontsLoaded] = useFonts({
     Poppins_700Bold,
     Poppins_400Regular
   });
 
-  const path = FileSystem.documentDirectory + "users.json";
+  const [email, setEmail] = useState("");
 
-  useEffect(() => {
+useEffect(() => {
   const loadUsers = async () => {
     try {
-      const exists = await FileSystem.getInfoAsync(path);
-      if (!exists.exists) {
-        const defaultUsers = { "ziemblapiotr1@gmail.com": "Admin" };
-        await FileSystem.writeAsStringAsync(path, JSON.stringify(defaultUsers));
-      }
-
-      let content = await FileSystem.readAsStringAsync(path);
-let obj = JSON.parse(content) as Record<string, string>;
-
-if (Object.keys(obj).length === 0) {
-  const defaultUsers = { "ziemblapiotr1@gmail.com": "Admin" };
-  await FileSystem.writeAsStringAsync(path, JSON.stringify(defaultUsers));
-  obj = defaultUsers;
-}
-
-setUsers(obj);
-
+      const res = await fetch("https://snapmail-backend.onrender.com/users");
+      if (!res.ok) throw new Error("Błąd sieci");
+      const data = await res.json();
+      setUsers(data);
     } catch (error) {
-      console.error("Błąd przy wczytywaniu users.json:", error);
+      console.error("Błąd przy pobieraniu users:", error);
     }
   };
-
   loadUsers();
 }, []);
 
+const handleLogin = () => {
+  // Usuń spacje i zamień na małe litery dla pewności
+  const enteredEmail = email.trim().toLowerCase();
 
-  const handleLogin = () => {
-    if (Email in users) {
-      const role = users[Email];
-      navigation.navigate("Home", { mail: Email, role });
-    } else {
-      Alert.alert("Błąd", "Nie znaleziono podanego maila", [
-        { text: "Pomiń logowanie", onPress: () => navigation.navigate("Home") },
-        { text: "OK" },
-      ]);
-    }
-  };
+  // Znajdź użytkownika w tablicy
+  const foundUser = users.find(
+    u => u.email.trim().toLowerCase() === enteredEmail
+  );
 
-  
+  if (foundUser) {
+    // Jeśli użytkownik istnieje, przejdź do Home
+    navigation.navigate("Home", { 
+  mail: foundUser.email, 
+  role: foundUser.role, 
+  target_mail: foundUser.target_mail 
+});
+
+  } else {
+    // Jeśli użytkownik nie istnieje, pokaż alert i nie przechodź dalej
+    Alert.alert("Błąd", "Nie znaleziono podanego maila", [{ text: "OK" }]);
+  }
+};
+
+
+
   return (
     <LinearGradient
       colors={["#3B82F6", "#9333EA"]}
@@ -83,7 +78,7 @@ setUsers(obj);
         <TextInput
           style={styles.input}
           placeholder="Adres E-mail"
-          value={Email}
+          value={email}
           onChangeText={setEmail}
         />
       </View>

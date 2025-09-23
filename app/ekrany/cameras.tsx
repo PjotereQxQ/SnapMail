@@ -20,7 +20,7 @@ export default function CameraScreen({ navigation, route }: any) {
   const { photos, addPhotos } = usePhotos();
   const mail = route.params.mail;
   const uprawnienia = route.params.uprawnienia;
-
+const targetMail = route.params.target_mail;
 
   if (!permission) return null;
 
@@ -65,7 +65,7 @@ export default function CameraScreen({ navigation, route }: any) {
   <View style={{justifyContent: 'center', alignItems: "center", margin: 20, marginLeft: 40 }}>
     <TouchableOpacity
       style={styles.galleryBtn}
-      onPress={() => navigation.navigate("Galeria", { mail: mail, uprawnienia: uprawnienia })}
+      onPress={() => navigation.navigate("Galeria", { mail: mail, uprawnienia: uprawnienia, target_mail: targetMail, })}
     >
       <Text style={styles.galleryText}>Powrót</Text>
     </TouchableOpacity>
@@ -75,7 +75,8 @@ export default function CameraScreen({ navigation, route }: any) {
     <TouchableOpacity
       onPress={() =>
         photos.length > 0 &&
-        navigation.navigate("Galeria", { mail: mail, uprawnienia: uprawnienia })
+        navigation.navigate("Galeria", { mail: mail, uprawnienia: uprawnienia, 
+  target_mail: targetMail, })
       }
       style={styles.thumbnail}
     >

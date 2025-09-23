@@ -8,37 +8,31 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import * as FileSystem from "expo-file-system";
 import { LinearGradient } from "expo-linear-gradient";
 import { usePhotos } from "../PhotosContext";
 
 export default function MailForm({ route, navigation }: any) {
   const { width, height } = useWindowDimensions();
-  const { photos } = usePhotos();
-  const photoUris = photos.map((p) => p.full);
-
-  const [to, setTo] = useState(
-    route.params.mail == "Anonimowy" ? "Podaj Emaila" : route.params.mail
-  );
+  const { photos, clearPhotos } = usePhotos();
+const targetMail = route.params.target_mail || "";
+  const [to, setTo] = useState(targetMail);
   const [subject, setSubject] = useState("Zdjęcia z aplikacji");
   const [body, setBody] = useState("");
 
   const sendMail = async () => {
     if (!to) return Alert.alert("Wpisz adres odbiorcy");
+    if (photos.length === 0) return Alert.alert("Brak zdjęć do wysłania");
 
     const formData = new FormData();
-    formData.append("to", to);
+    formData.append("email", to);
     formData.append("subject", subject);
     formData.append("body", body);
 
-    photoUris.forEach((uri) => {
-      const filename = uri.split("/").pop();
-      formData.append("photos", {
-        uri,
-        name: filename,
-        type: "image/jpeg",
-      } as any);
-    });
+  photos.forEach((p) => {
+  const filename = p.full.split("/").pop(); 
+  formData.append("photos", { uri: p.full, name: filename, type: "image/jpeg" } as any);
+});
+
 
     try {
       const response = await fetch(
@@ -49,8 +43,13 @@ export default function MailForm({ route, navigation }: any) {
         }
       );
       const data = await response.json();
-      if (data.success) Alert.alert("Mail wysłany!");
-      else Alert.alert("Błąd", data.message);
+      if (data.success) {
+        Alert.alert("Mail wysłany!");
+        clearPhotos();
+        navigation.navigate("Galeria", { mail: to });
+      } else {
+        Alert.alert("Błąd", data.message || "Nie udało się wysłać maila");
+      }
     } catch (error) {
       console.error(error);
       Alert.alert("Błąd", "Nie udało się wysłać maila");
@@ -92,20 +91,14 @@ export default function MailForm({ route, navigation }: any) {
 
       <View style={[styles.buttons, { gap: width * 0.1 }]}>
         <TouchableOpacity
-          style={[
-            styles.button,
-            { backgroundColor: "white", width: width * 0.3 },
-          ]}
+          style={[styles.button, { backgroundColor: "white", width: width * 0.3 }]}
           onPress={() => navigation.goBack()}
         >
           <Text style={styles.buttonText}>Powrót</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[
-            styles.button,
-            { backgroundColor: "#10B981", width: width * 0.3 },
-          ]}
+          style={[styles.button, { backgroundColor: "#10B981", width: width * 0.3 }]}
           onPress={sendMail}
         >
           <Text style={styles.buttonText}>Wyślij</Text>
