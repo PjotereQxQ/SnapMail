@@ -101,6 +101,13 @@ export default function UsersScreen({ navigation }: any) {
 };
 
 const changeRole = async (email: string, newRole: string, target_mail: string) => {
+  // Walidacja target_mail
+  if (!validateEmail(target_mail)) {
+    Alert.alert("Nieprawidłowy mail docelowy", "Wpisz poprawny adres email.");
+    loadUsers(); // przywraca poprzednią wartość w UI
+    return;
+  }
+
   const adminCount = users.filter(u => u.role === "Admin").length;
   const userToChange = users.find(u => u.email === email);
 
@@ -124,6 +131,7 @@ const changeRole = async (email: string, newRole: string, target_mail: string) =
     console.error("Błąd przy zmianie roli:", error);
   }
 };
+
 
 
   return (
