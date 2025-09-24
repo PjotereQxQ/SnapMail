@@ -27,7 +27,6 @@ export default function UsersScreen({ navigation }: any) {
   const [newEmail, setNewEmail] = useState("");
   const [newRole, setNewRole] = useState("User");
 
-  // Pobierz użytkowników z backendu
   const loadUsers = async () => {
     try {
       const res = await fetch(`${API_URL}/users`);
@@ -69,7 +68,6 @@ export default function UsersScreen({ navigation }: any) {
   const userToDelete = users.find(u => u.email === email);
 
   if (userToDelete?.role === "Admin" && adminCount === 1) {
-    // Jeśli jest jedyny admin
     Alert.alert(
       "Nie można usunąć",
       "Nie można usunąć jedynego admina. Tworzę domyślnego admina..."
@@ -101,10 +99,9 @@ export default function UsersScreen({ navigation }: any) {
 };
 
 const changeRole = async (email: string, newRole: string, target_mail: string) => {
-  // Walidacja target_mail
   if (!validateEmail(target_mail)) {
     Alert.alert("Nieprawidłowy mail docelowy", "Wpisz poprawny adres email.");
-    loadUsers(); // przywraca poprzednią wartość w UI
+    loadUsers(); 
     return;
   }
 
@@ -236,7 +233,6 @@ const changeRole = async (email: string, newRole: string, target_mail: string) =
   );
 }
 
-// (styles zostają takie same)
 
 const styles = StyleSheet.create({
   body: { flex: 1, alignItems: "center", padding: 20 },
@@ -295,7 +291,7 @@ rolePickerWrapper: {
   backgroundColor: "white",
   borderRadius: 10,
   overflow: "hidden",
-  height: 50, // ta sama wysokość co przycisk
+  height: 50,
   justifyContent: "center",
 },
 
@@ -311,7 +307,7 @@ deleteButtonCard: {
   justifyContent: "center",
   alignItems: "center",
   borderRadius: 10,
-  height: 50, // ta sama wysokość co picker
+  height: 50,
 },
 
 });

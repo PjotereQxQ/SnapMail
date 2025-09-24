@@ -39,16 +39,13 @@ useEffect(() => {
 }, []);
 
 const handleLogin = () => {
-  // Usuń spacje i zamień na małe litery dla pewności
   const enteredEmail = email.trim().toLowerCase();
 
-  // Znajdź użytkownika w tablicy
   const foundUser = users.find(
     u => u.email.trim().toLowerCase() === enteredEmail
   );
 
   if (foundUser) {
-    // Jeśli użytkownik istnieje, przejdź do Home
     navigation.navigate("Home", { 
   mail: foundUser.email, 
   role: foundUser.role, 
@@ -56,7 +53,6 @@ const handleLogin = () => {
 });
 
   } else {
-    // Jeśli użytkownik nie istnieje, pokaż alert i nie przechodź dalej
     Alert.alert("Błąd", "Nie znaleziono podanego maila", [{ text: "OK" }]);
   }
 };

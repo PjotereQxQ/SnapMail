@@ -16,7 +16,7 @@ export const PhotosProvider = ({ children }: { children: React.ReactNode }) => {
   const addPhotos = (newUris: string[]) => {
     setPhotos((prev) => [
       ...prev,
-      ...newUris.map((uri) => ({ full: uri, thumb: uri })), // full i thumb jako string
+      ...newUris.map((uri) => ({ full: uri, thumb: uri })), 
     ]);
   };
 

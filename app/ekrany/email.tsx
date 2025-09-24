@@ -15,6 +15,7 @@ export default function MailForm({ route, navigation }: any) {
   const { width, height } = useWindowDimensions();
   const { photos, clearPhotos } = usePhotos();
 const targetMail = route.params.target_mail || "";
+const uprawnienia = route.params.uprawnienia;
   const [to, setTo] = useState(targetMail);
   const [subject, setSubject] = useState("Zdjęcia z aplikacji");
   const [body, setBody] = useState("");
@@ -74,6 +75,7 @@ const targetMail = route.params.target_mail || "";
         onChangeText={setTo}
         keyboardType="email-address"
         autoCapitalize="none"
+        editable={uprawnienia !== "User"}
       />
       <TextInput
         style={styles.input}
