@@ -1,4 +1,4 @@
-# 📸 Aplikacja mobilna - Kamera, Galeria i Mail
+# 📸 Aplikacja mobilna - SnapMail
 
 Aplikacja mobilna została stworzona w React Native z Expo i jest prostym, ale praktycznym narzędziem do pracy ze zdjęciami. Jej główne funkcje to:
 
